@@ -12,7 +12,7 @@ const db = getFirestore();
 
 type Status = 'new' | 'applied' | 'ignored';
 
-type Provider = 'openai' | 'gemini';
+type Provider = 'openai' | 'gemini' | 'openrouter';
 
 type Job = {
   id: string;
@@ -129,7 +129,7 @@ function buildSearchPrompt(profile: string, existing: Job[]): string {
     .map((j) => `${j.company} - ${j.title}`)
     .join('; ');
 
-  return `Search the live web for ${BATCH_SIZE} currently open job postings that are an excellent fit for the candidate described below. Infer the right job titles and seniority level to search for directly from the candidate profile - do not restrict yourself to a single fixed query. Only include jobs published or freshly listed within the last ${DAYS_FRESH} days. Only include jobs the candidate is genuinely eligible to work in, based on the location/remote preferences described in their profile. Do not include jobs that are already closed. Prefer the ORIGINAL employer application URL and never return paywalled job-board links that require a login to view the posting. Verify geography and freshness from available evidence. Each returned job must be a genuinely distinct posting (different company or different role) - never list near-duplicates of each other in the same response.${
+  return `Today is ${isoDate(new Date())}. Search the live web for ${BATCH_SIZE} currently open job postings that are an excellent fit for the candidate described below. Infer the right job titles and seniority level to search for directly from the candidate profile - do not restrict yourself to a single fixed query. Only include jobs published or freshly listed within the last ${DAYS_FRESH} days. Geographic eligibility is a HARD filter: the candidate can only work from the country/city stated in their profile (plus any relocation or remote preference explicitly stated there). Exclude every posting restricted to another country or region, or that requires work authorization/residency the candidate does not have - e.g. "US only", "must be authorized to work in the United States", "Canada residents only", "EU work permit required" for a non-EU candidate. On-site or hybrid roles must be in the candidate's city/country; remote roles are fine only when the posting states no geographic restriction or explicitly includes the candidate's country. Do not return a job whose eligibility is conditional on something the candidate does not have - drop it and find another one instead. Do not include jobs that are already closed. Every url must be copied verbatim from a page you actually found in your search results - never construct, guess or "clean up" a URL. When the original employer/ATS application page is among your results prefer it, otherwise use the job-board page you found. Never return paywalled job-board links that require a login to view the posting. Verify geography and freshness from available evidence. Each returned job must be a genuinely distinct posting (different company or different role) - never list near-duplicates of each other in the same response.${
     alreadyShown
       ? ` IMPORTANT: the candidate has ALREADY been shown these jobs in previous searches, do NOT include them again, find different postings: ${alreadyShown}.`
       : ''
@@ -137,17 +137,76 @@ function buildSearchPrompt(profile: string, existing: Job[]): string {
 
 Candidate profile: ${profile}
 
-Return ONLY JSON with shape {"jobs":[{"title":"","company":"","location":"","remote":"","publishedAt":"human-readable age/date","url":"https://...","source":"official/ATS domain","stack":["React"],"match":0,"why":"1-2 concise sentences on why this role fits the candidate","eligibility":"short explanation of why the candidate is eligible to apply","whyWorkingForUs":"a SHORT first-person answer (max 2 short sentences, under 40 words) to \\"Why do you want to work for us?\\", specific to this company/role, plain everyday language - avoid corporate buzzwords like thrilled, passionate, align, mission, journey, avoid em dashes, sound like a real candidate typed it quickly rather than an AI: include one small natural imperfection (a minor typo, an informal contraction, a slightly awkward phrasing) - just one or two such slips, keep it understandable"}]}. Match is 0-100 based on fit with the candidate profile. No markdown, no code fences.`;
+Return ONLY JSON with shape {"jobs":[{"title":"","company":"","location":"","remote":"","publishedAt":"human-readable age/date","url":"https://...","source":"official/ATS domain","stack":["React"],"match":0,"why":"1-2 concise sentences on why this role fits the candidate","eligible":true,"eligibility":"short explanation of why the candidate is eligible to apply from their location","whyWorkingForUs":"a SHORT first-person answer (max 2 short sentences, under 40 words) to \\"Why do you want to work for us?\\", specific to this company/role, plain everyday language - avoid corporate buzzwords like thrilled, passionate, align, mission, journey, avoid em dashes, sound like a real candidate typed it quickly rather than an AI: include one small natural imperfection (a minor typo, an informal contraction, a slightly awkward phrasing) - just one or two such slips, keep it understandable"}]}. Match is 0-100 based on fit with the candidate profile. "eligible" must be false whenever the posting's location or work-authorization requirements exclude the candidate; such jobs should not be returned at all. No markdown, no code fences.`;
 }
 
 function normalizeProvider(value: unknown): Provider {
-  return value === 'gemini' ? 'gemini' : 'openai';
+  return value === 'gemini' || value === 'openrouter' ? value : 'openai';
 }
 
+const PROVIDER_LABELS: Record<Provider, string> = {
+  openai: 'an OpenAI',
+  gemini: 'a Gemini',
+  openrouter: 'an OpenRouter',
+};
+
 function resolveModel(provider: Provider): string {
-  return provider === 'gemini'
-    ? process.env.GEMINI_MODEL || 'gemini-2.5-flash'
-    : process.env.OPENAI_MODEL || 'gpt-4o';
+  switch (provider) {
+    case 'gemini':
+      return process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    case 'openrouter':
+      return process.env.OPENROUTER_MODEL || 'perplexity/sonar';
+    default:
+      return process.env.OPENAI_MODEL || 'gpt-4o';
+  }
+}
+
+// OpenRouter exposes an OpenAI-compatible Chat Completions API; the optional
+// headers are only used by OpenRouter for app attribution/rankings.
+function newOpenRouterClient(apiKey: string): OpenAI {
+  return new OpenAI({
+    apiKey,
+    baseURL: 'https://openrouter.ai/api/v1',
+    defaultHeaders: { 'X-Title': 'Job Scout' },
+  });
+}
+
+// Perplexity models reject response_format (400) and search the web natively;
+// everything else routed through OpenRouter gets JSON mode and the web plugin.
+function isPerplexityModel(model: string): boolean {
+  return model.startsWith('perplexity/');
+}
+
+// OpenRouter-only request fields the OpenAI SDK types don't know about.
+type OpenRouterParams = OpenAI.Chat.ChatCompletionCreateParamsNonStreaming & {
+  plugins?: ({ id: 'web' } | { id: 'file-parser'; pdf: { engine: string } })[];
+  search_after_date_filter?: string;
+};
+
+function isoDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+// Perplexity's search_after_date_filter wants MM/DD/YYYY.
+function perplexityAfterDate(daysAgo: number): string {
+  const d = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
+  return `${d.getUTCMonth() + 1}/${d.getUTCDate()}/${d.getUTCFullYear()}`;
+}
+
+function openRouterJsonFormat(model: string) {
+  return isPerplexityModel(model) ? {} : { response_format: { type: 'json_object' as const } };
+}
+
+// Some models (e.g. Perplexity) wrap JSON in fences or add citations around
+// it, and a model can occasionally answer in prose instead of JSON. Extract
+// the outermost object and fail loudly when there is none.
+function extractJsonObject(text: string): string {
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start < 0 || end <= start) {
+    throw new Error(`The model did not return JSON: ${text.trim().slice(0, 200)}`);
+  }
+  return text.slice(start, end + 1);
 }
 
 function resolveApiKey(provided: unknown): string | undefined {
@@ -155,7 +214,7 @@ function resolveApiKey(provided: unknown): string | undefined {
 }
 
 function missingKeyError(provider: Provider): string {
-  return `Set a${provider === 'gemini' ? ' Gemini' : 'n OpenAI'} API key in Settings first.`;
+  return `Set ${PROVIDER_LABELS[provider]} API key in Settings first.`;
 }
 
 function splitDataUrl(dataUrl: string): { mimeType: string; base64: string } {
@@ -183,6 +242,16 @@ async function generateJson(provider: Provider, apiKey: string, prompt: string):
       config: { responseMimeType: 'application/json' },
     });
     return response.text ?? '';
+  }
+
+  if (provider === 'openrouter') {
+    const model = resolveModel(provider);
+    const response = await newOpenRouterClient(apiKey).chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      ...openRouterJsonFormat(model),
+    });
+    return extractJsonObject(response.choices[0]?.message?.content ?? '');
   }
 
   const client = new OpenAI({ apiKey });
@@ -215,6 +284,28 @@ async function generateJsonFromFile(
     return response.text ?? '';
   }
 
+  if (provider === 'openrouter') {
+    // OpenRouter parses the PDF server-side for models without native file input.
+    // CVs are text PDFs, so the free text-layer engine is used instead of the
+    // default OCR one (mistral-ocr, billed per page). Scanned CVs won't work.
+    const model = resolveModel(provider);
+    const response = await newOpenRouterClient(apiKey).chat.completions.create({
+      model,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            { type: 'file', file: { filename: filename || 'cv.pdf', file_data: fileDataUrl } },
+          ],
+        },
+      ],
+      ...openRouterJsonFormat(model),
+      plugins: [{ id: 'file-parser', pdf: { engine: 'pdf-text' } }],
+    } satisfies OpenRouterParams as OpenRouterParams);
+    return extractJsonObject(response.choices[0]?.message?.content ?? '');
+  }
+
   const client = new OpenAI({ apiKey });
   const response = await client.responses.create({
     model: resolveModel(provider),
@@ -233,7 +324,13 @@ async function generateJsonFromFile(
 }
 
 // Runs a prompt with live web-search grounding enabled (used for job search).
-async function searchWithGrounding(provider: Provider, apiKey: string, prompt: string): Promise<string> {
+type GroundedResult = {
+  text: string;
+  // URLs the model actually retrieved, when the provider reports them.
+  citations?: string[];
+};
+
+async function searchWithGrounding(provider: Provider, apiKey: string, prompt: string): Promise<GroundedResult> {
   if (provider === 'gemini') {
     const ai = await newGoogleGenAI(apiKey);
     const response = await ai.models.generateContent({
@@ -241,7 +338,26 @@ async function searchWithGrounding(provider: Provider, apiKey: string, prompt: s
       contents: prompt,
       config: { tools: [{ googleSearch: {} }] },
     });
-    return response.text ?? '';
+    return { text: response.text ?? '' };
+  }
+
+  if (provider === 'openrouter') {
+    const model = resolveModel(provider);
+    const response = await newOpenRouterClient(apiKey).chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      ...openRouterJsonFormat(model),
+      // Perplexity searches natively and can restrict results by date; other
+      // models get OpenRouter's web plugin and rely on the date in the prompt.
+      ...(isPerplexityModel(model)
+        ? { search_after_date_filter: perplexityAfterDate(DAYS_FRESH) }
+        : { plugins: [{ id: 'web' }] }),
+    } satisfies OpenRouterParams as OpenRouterParams);
+    const message = response.choices[0]?.message;
+    const citations = (message?.annotations ?? [])
+      .map((a: any) => a?.url_citation?.url)
+      .filter((u: unknown): u is string => typeof u === 'string');
+    return { text: extractJsonObject(message?.content ?? ''), citations };
   }
 
   const client = new OpenAI({ apiKey });
@@ -250,7 +366,7 @@ async function searchWithGrounding(provider: Provider, apiKey: string, prompt: s
     tools: [{ type: 'web_search' }],
     input: prompt,
   });
-  return response.output_text;
+  return { text: response.output_text };
 }
 
 async function fetchFreshJobs(
@@ -259,7 +375,11 @@ async function fetchFreshJobs(
   provider: Provider,
   apiKey: string
 ): Promise<Job[]> {
-  const raw = await searchWithGrounding(provider, apiKey, buildSearchPrompt(profile, existing));
+  const { text: raw, citations } = await searchWithGrounding(
+    provider,
+    apiKey,
+    buildSearchPrompt(profile, existing)
+  );
   const text = raw
     .trim()
     .replace(/^```json\s*/, '')
@@ -270,8 +390,23 @@ async function fetchFreshJobs(
   const knownKeys = new Set(existing.map(normalizeKey));
   const seenInBatch = new Set<string>();
 
-  const fresh: Job[] = (parsed.jobs || [])
-    .filter((x: any) => /^https?:\/\//.test(x.url))
+  // When the provider reports which pages it actually retrieved, drop jobs
+  // whose URL isn't one of them: models sometimes invent plausible-looking
+  // career-page URLs that don't exist.
+  const cited = citations?.length ? new Set(citations) : null;
+  const candidates: any[] = (parsed.jobs || []).filter((x: any) => /^https?:\/\//.test(x.url));
+  const grounded = cited ? candidates.filter((x) => cited.has(x.url)) : candidates;
+  if (grounded.length < candidates.length) {
+    console.warn(`Dropped ${candidates.length - grounded.length} job(s) with URLs not found in search citations.`);
+  }
+  // The model is asked to flag geographic/work-authorization eligibility
+  // explicitly; anything it does not vouch for is dropped.
+  const eligible = grounded.filter((x) => x.eligible !== false);
+  if (eligible.length < grounded.length) {
+    console.warn(`Dropped ${grounded.length - eligible.length} job(s) the model marked as not eligible.`);
+  }
+
+  const fresh: Job[] = eligible
     .filter((x: any) => !knownUrls.has(x.url))
     .filter((x: any) => !knownKeys.has(normalizeKey(x)))
     .filter((x: any) => {
@@ -280,7 +415,7 @@ async function fetchFreshJobs(
       seenInBatch.add(key);
       return true;
     })
-    .map((x: any) => ({
+    .map(({ eligible: _eligible, ...x }: any) => ({
       ...x,
       id: crypto.createHash('sha1').update(x.url).digest('hex').slice(0, 12),
       match: Math.max(0, Math.min(100, Number(x.match) || 0)),

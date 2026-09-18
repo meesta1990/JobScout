@@ -71,13 +71,14 @@ type Stats = {
   ignored: number;
 };
 
-type Provider = 'openai' | 'gemini';
+type Provider = 'openai' | 'gemini' | 'openrouter';
 
 const PROFILE_KEY = 'jobscout.profile';
 const CV_DATA_KEY = 'jobscout.cvData';
 const CLIENT_ID_KEY = 'jobscout.clientId';
 const API_KEY_KEY = 'jobscout.apiKey';
 const GEMINI_API_KEY_KEY = 'jobscout.geminiApiKey';
+const OPENROUTER_API_KEY_KEY = 'jobscout.openrouterApiKey';
 const PROVIDER_KEY = 'jobscout.provider';
 const CV_LAYOUT_KEY = 'jobscout.cvLayout';
 
@@ -96,7 +97,20 @@ const PROVIDERS: { id: Provider; name: string; keyPlaceholder: string; keyLink: 
     keyLink: 'https://aistudio.google.com/apikey',
     keyLinkLabel: 'aistudio.google.com/apikey',
   },
+  {
+    id: 'openrouter',
+    name: 'OpenRouter',
+    keyPlaceholder: 'sk-or-...',
+    keyLink: 'https://openrouter.ai/keys',
+    keyLinkLabel: 'openrouter.ai/keys',
+  },
 ];
+
+const API_KEY_STORAGE: Record<Provider, string> = {
+  openai: API_KEY_KEY,
+  gemini: GEMINI_API_KEY_KEY,
+  openrouter: OPENROUTER_API_KEY_KEY,
+};
 
 const CV_LAYOUTS = [
   { id: 'classic', name: 'Classic', color: '#1F3B8C' },
@@ -106,32 +120,21 @@ const CV_LAYOUTS = [
   { id: 'timeline', name: 'Timeline', color: '#5B3FBF' },
 ] as const;
 
-function getApiKey(): string {
-  try {
-    return localStorage.getItem(API_KEY_KEY) || '';
-  } catch {
-    return '';
-  }
-}
-
-function getGeminiApiKey(): string {
-  try {
-    return localStorage.getItem(GEMINI_API_KEY_KEY) || '';
-  } catch {
-    return '';
-  }
-}
-
 function getProvider(): Provider {
   try {
-    return localStorage.getItem(PROVIDER_KEY) === 'gemini' ? 'gemini' : 'openai';
+    const stored = localStorage.getItem(PROVIDER_KEY);
+    return stored === 'gemini' || stored === 'openrouter' ? stored : 'openai';
   } catch {
     return 'openai';
   }
 }
 
 function getKeyForProvider(provider: Provider): string {
-  return provider === 'gemini' ? getGeminiApiKey() : getApiKey();
+  try {
+    return localStorage.getItem(API_KEY_STORAGE[provider]) || '';
+  } catch {
+    return '';
+  }
 }
 
 function getActiveApiKey(): string {
@@ -308,7 +311,7 @@ function ApiKeySetup({ onSaved }: { onSaved: () => void }) {
     if (!apiKey.trim()) return;
     try {
       localStorage.setItem(PROVIDER_KEY, provider);
-      localStorage.setItem(provider === 'gemini' ? GEMINI_API_KEY_KEY : API_KEY_KEY, apiKey.trim());
+      localStorage.setItem(API_KEY_STORAGE[provider], apiKey.trim());
     } catch {
       // localStorage unavailable, key will just need to be re-entered next time
     }
@@ -448,7 +451,7 @@ function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void 
   function save() {
     try {
       localStorage.setItem(PROVIDER_KEY, provider);
-      const key = provider === 'gemini' ? GEMINI_API_KEY_KEY : API_KEY_KEY;
+      const key = API_KEY_STORAGE[provider];
       if (apiKey.trim()) {
         localStorage.setItem(key, apiKey.trim());
       } else {

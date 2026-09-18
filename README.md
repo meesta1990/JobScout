@@ -1,7 +1,7 @@
 # Job Scout
 
-React + TypeScript job finder using either the OpenAI Responses API or the Gemini API, both with
-built-in web search.
+React + TypeScript job finder using the OpenAI Responses API, the Gemini API or OpenRouter, all
+with built-in web search.
 
 ## Run locally
 
@@ -11,11 +11,11 @@ pnpm dev
 ```
 
 Open http://localhost:5173. There's no bundled API key: the app will prompt you to pick a
-provider (ChatGPT/OpenAI or Gemini/Google) and enter your own API key for it on first run (see
-"What it does" below).
+provider (ChatGPT/OpenAI, Gemini/Google or OpenRouter) and enter your own API key for it on first
+run (see "What it does" below).
 
 ## What it does
-- On first visit, pick an AI provider (ChatGPT or Gemini) and enter your own API key for it. It's
+- On first visit, pick an AI provider (ChatGPT, Gemini or OpenRouter) and enter your own API key for it. It's
   stored only in your browser's `localStorage` and sent per-request - never saved on any server.
   You can change the provider or key later from the menu → Settings.
 - Then upload your CV (PDF). It's sent to the selected provider to extract a candidate profile,
@@ -32,6 +32,23 @@ provider (ChatGPT/OpenAI or Gemini/Google) and enter your own API key for it on 
 Locally, state is persisted per-browser in `data/clients/<clientId>.json`. There is no
 server-side API key fallback - every request always carries the key from the browser's
 Settings. `.env` (copy `.env.example`) only lets you override which model each provider uses.
+
+## Providers
+
+| Provider | Default model | Override | Web search |
+|---|---|---|---|
+| ChatGPT (OpenAI) | `gpt-4o` | `OPENAI_MODEL` | OpenAI `web_search` tool (Responses API) |
+| Gemini (Google) | `gemini-2.5-flash` | `GEMINI_MODEL` | Google Search grounding |
+| OpenRouter | `perplexity/sonar` | `OPENROUTER_MODEL` | Native for `perplexity/*` models (with a date filter matching the freshness window), otherwise OpenRouter's `web` plugin (extra per-request cost) |
+
+OpenRouter talks the OpenAI Chat Completions API, so any model slug on
+[openrouter.ai/models](https://openrouter.ai/models) works. Jobs whose URL doesn't appear among
+the pages the search actually retrieved are discarded, since models otherwise invent
+plausible-looking career-page links. Perplexity models return solid results; non-Perplexity
+models via the `web` plugin often get irrelevant search hits and end up with few or no jobs
+per search, so stick with the default unless you have a reason not to. CV PDFs are parsed by OpenRouter
+itself (text-layer extraction via the free `pdf-text` engine, so scanned/image-only CVs are not
+supported on this provider).
 
 ## Deploy to Firebase
 
