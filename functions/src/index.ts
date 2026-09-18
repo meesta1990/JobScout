@@ -1,5 +1,4 @@
 import { onRequest } from 'firebase-functions/v2/https';
-import { defineSecret } from 'firebase-functions/params';
 import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import express from 'express';
@@ -10,9 +9,6 @@ import crypto from 'node:crypto';
 
 initializeApp();
 const db = getFirestore();
-
-const openaiApiKey = defineSecret('OPENAI_API_KEY');
-const geminiApiKey = defineSecret('GEMINI_API_KEY');
 
 type Status = 'new' | 'applied' | 'ignored';
 
@@ -154,9 +150,12 @@ function resolveModel(provider: Provider): string {
     : process.env.OPENAI_MODEL || 'gpt-4o';
 }
 
-function resolveApiKey(provider: Provider, provided: unknown): string {
-  if (typeof provided === 'string' && provided.trim()) return provided.trim();
-  return provider === 'gemini' ? geminiApiKey.value() : openaiApiKey.value();
+function resolveApiKey(provided: unknown): string | undefined {
+  return typeof provided === 'string' && provided.trim() ? provided.trim() : undefined;
+}
+
+function missingKeyError(provider: Provider): string {
+  return `Set a${provider === 'gemini' ? ' Gemini' : 'n OpenAI'} API key in Settings first.`;
 }
 
 function splitDataUrl(dataUrl: string): { mimeType: string; base64: string } {
@@ -303,10 +302,14 @@ app.post('/api/profile', async (req, res) => {
     if (!base64 || typeof base64 !== 'string') {
       return res.status(400).json({ error: 'Missing CV file.' });
     }
+    const resolvedKey = resolveApiKey(apiKey);
+    if (!resolvedKey) {
+      return res.status(500).json({ error: missingKeyError(provider) });
+    }
 
     const text = await generateJsonFromFile(
       provider,
-      resolveApiKey(provider, apiKey),
+      resolvedKey,
       PROFILE_EXTRACTION_PROMPT,
       base64,
       filename || 'cv.pdf'
@@ -837,8 +840,12 @@ app.post('/api/tailor-cv', async (req, res) => {
     if (!job || typeof job !== 'object') {
       return res.status(400).json({ error: 'Missing job.' });
     }
+    const resolvedKey = resolveApiKey(apiKey);
+    if (!resolvedKey) {
+      return res.status(500).json({ error: missingKeyError(provider) });
+    }
 
-    const text = await generateJson(provider, resolveApiKey(provider, apiKey), buildTailorPrompt(cv, job));
+    const text = await generateJson(provider, resolvedKey, buildTailorPrompt(cv, job));
     const tailored: CvData = JSON.parse(text.trim());
     const pdf = await renderCvPdf(tailored, typeof layout === 'string' ? layout : 'classic');
 
@@ -881,12 +888,16 @@ app.post('/api/jobs/next', async (req, res) => {
     if (!profile || typeof profile !== 'string' || profile.trim().length < 10) {
       return res.status(400).json({ error: 'Missing candidate profile. Upload your CV first.' });
     }
+    const resolvedKey = resolveApiKey(apiKey);
+    if (!resolvedKey) {
+      return res.status(500).json({ error: missingKeyError(provider) });
+    }
 
     const next = await findNextNew(clientId);
     if (next) return res.json({ job: next });
 
     const existing = await readJobs(clientId);
-    const fresh = await fetchFreshJobs(existing, profile, provider, resolveApiKey(provider, apiKey));
+    const fresh = await fetchFreshJobs(existing, profile, provider, resolvedKey);
     if (!fresh.length) return res.json({ job: null });
 
     await writeNewJobs(clientId, fresh);
@@ -907,4 +918,4 @@ app.patch('/api/jobs/:id', async (req, res) => {
   res.json(updated);
 });
 
-export const api = onRequest({ secrets: [openaiApiKey, geminiApiKey] }, app);
+export const api = onRequest(app);

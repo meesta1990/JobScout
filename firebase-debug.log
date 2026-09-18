@@ -1,0 +1,103 @@
+[debug] [2026-09-18T13:13:50.772Z] ----------------------------------------------------------------------
+[debug] [2026-09-18T13:13:50.776Z] Command:       /Users/marcomamone/.asdf/installs/nodejs/22.15.0/bin/node /Users/marcomamone/.asdf/installs/nodejs/22.15.0/bin/firebase functions:secrets:set GEMINI_API_KEY
+[debug] [2026-09-18T13:13:50.776Z] CLI Version:   15.3.0
+[debug] [2026-09-18T13:13:50.777Z] Platform:      darwin
+[debug] [2026-09-18T13:13:50.777Z] Node Version:  v22.15.0
+[debug] [2026-09-18T13:13:50.777Z] Time:          Fri Sep 18 2026 15:13:50 GMT+0200 (Central European Summer Time)
+[debug] [2026-09-18T13:13:50.777Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-09-18T13:13:50.877Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-18T13:13:50.878Z] > authorizing via signed-in user (marco.mamone9@gmail.com)
+[debug] [2026-09-18T13:13:50.878Z] Checked if tokens are valid: false, expires at: 1789726898394
+[debug] [2026-09-18T13:13:50.878Z] Checked if tokens are valid: false, expires at: 1789726898394
+[debug] [2026-09-18T13:13:50.878Z] > refreshing access token with scopes: []
+[debug] [2026-09-18T13:13:50.880Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-09-18T13:13:50.880Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-09-18T13:13:51.040Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-09-18T13:13:51.040Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-09-18T13:13:51.058Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/jobfinder-f0a77/services/secretmanager.googleapis.com [none]
+[debug] [2026-09-18T13:13:51.058Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/jobfinder-f0a77/services/secretmanager.googleapis.com x-goog-quota-user=projects/jobfinder-f0a77
+[debug] [2026-09-18T13:13:52.032Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/jobfinder-f0a77/services/secretmanager.googleapis.com 200
+[debug] [2026-09-18T13:13:52.032Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/jobfinder-f0a77/services/secretmanager.googleapis.com [omitted]
+[debug] [2026-09-18T13:13:52.043Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-18T13:13:52.043Z] > authorizing via signed-in user (marco.mamone9@gmail.com)
+[debug] [2026-09-18T13:13:52.043Z] [iam] checking project jobfinder-f0a77 for permissions ["firebase.projects.get","secretmanager.secrets.create","secretmanager.secrets.get","secretmanager.secrets.update","secretmanager.versions.add"]
+[debug] [2026-09-18T13:13:52.044Z] Checked if tokens are valid: true, expires at: 1789740830040
+[debug] [2026-09-18T13:13:52.044Z] Checked if tokens are valid: true, expires at: 1789740830040
+[debug] [2026-09-18T13:13:52.044Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77:testIamPermissions [none]
+[debug] [2026-09-18T13:13:52.044Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77:testIamPermissions x-goog-quota-user=projects/jobfinder-f0a77
+[debug] [2026-09-18T13:13:52.044Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77:testIamPermissions {"permissions":["firebase.projects.get","secretmanager.secrets.create","secretmanager.secrets.get","secretmanager.secrets.update","secretmanager.versions.add"]}
+[debug] [2026-09-18T13:13:52.833Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77:testIamPermissions 200
+[debug] [2026-09-18T13:13:52.833Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77:testIamPermissions {"permissions":["firebase.projects.get","secretmanager.secrets.create","secretmanager.secrets.get","secretmanager.secrets.update","secretmanager.versions.add"]}
+[debug] [2026-09-18T13:13:52.834Z] Checked if tokens are valid: true, expires at: 1789740830040
+[debug] [2026-09-18T13:13:52.834Z] Checked if tokens are valid: true, expires at: 1789740830040
+[debug] [2026-09-18T13:13:52.834Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77 [none]
+[debug] [2026-09-18T13:13:53.046Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77 200
+[debug] [2026-09-18T13:13:53.047Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77 {"projectNumber":"226213671442","projectId":"jobfinder-f0a77","lifecycleState":"ACTIVE","name":"JobFinder","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2026-09-16T10:58:03.128Z"}
+[debug] [2026-09-18T13:13:53.048Z] Checked if tokens are valid: true, expires at: 1789740830040
+[debug] [2026-09-18T13:13:53.048Z] Checked if tokens are valid: true, expires at: 1789740830040
+[debug] [2026-09-18T13:13:53.048Z] >>> [apiv2][query] GET https://secretmanager.googleapis.com/v1/projects/jobfinder-f0a77/secrets/GEMINI_API_KEY [none]
+[debug] [2026-09-18T13:13:53.321Z] <<< [apiv2][status] GET https://secretmanager.googleapis.com/v1/projects/jobfinder-f0a77/secrets/GEMINI_API_KEY 404
+[debug] [2026-09-18T13:13:53.321Z] <<< [apiv2][body] GET https://secretmanager.googleapis.com/v1/projects/jobfinder-f0a77/secrets/GEMINI_API_KEY {"error":{"code":404,"message":"Secret [projects/226213671442/secrets/GEMINI_API_KEY] not found.","status":"NOT_FOUND"}}
+[debug] [2026-09-18T13:13:53.322Z] Checked if tokens are valid: true, expires at: 1789740830040
+[debug] [2026-09-18T13:13:53.322Z] Checked if tokens are valid: true, expires at: 1789740830040
+[debug] [2026-09-18T13:13:53.323Z] >>> [apiv2][query] POST https://secretmanager.googleapis.com/v1/projects/jobfinder-f0a77/secrets secretId=GEMINI_API_KEY
+[debug] [2026-09-18T13:13:53.323Z] >>> [apiv2][body] POST https://secretmanager.googleapis.com/v1/projects/jobfinder-f0a77/secrets {"name":"GEMINI_API_KEY","replication":{"automatic":{}},"labels":{"firebase-managed":"functions"}}
+[debug] [2026-09-18T13:13:54.279Z] <<< [apiv2][status] POST https://secretmanager.googleapis.com/v1/projects/jobfinder-f0a77/secrets 200
+[debug] [2026-09-18T13:13:54.280Z] <<< [apiv2][body] POST https://secretmanager.googleapis.com/v1/projects/jobfinder-f0a77/secrets {"name":"projects/226213671442/secrets/GEMINI_API_KEY","replication":{"automatic":{}},"createTime":"2026-09-18T13:13:53.430693Z","labels":{"firebase-managed":"functions"},"etag":"\"165bc1ac163c9e\""}
+[debug] [2026-09-18T13:13:54.295Z] ExitPromptError: User force closed the prompt with SIGINT
+    at Interface.sigint (/Users/marcomamone/.asdf/installs/nodejs/22.15.0/lib/node_modules/firebase-tools/node_modules/@inquirer/core/dist/commonjs/lib/create-prompt.js:101:37)
+    at Interface.emit (node:events:518:28)
+    at [_ttyWrite] [as _ttyWrite] (node:internal/readline/interface:1128:18)
+    at ReadStream.onkeypress (node:internal/readline/interface:267:20)
+    at ReadStream.emit (node:events:530:35)
+    at emitKeys (node:internal/readline/utils:370:14)
+    at emitKeys.next (<anonymous>)
+    at ReadStream.onData (node:internal/readline/emitKeypressEvents:64:36)
+    at ReadStream.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2026-09-18T13:13:59.913Z] ----------------------------------------------------------------------
+[debug] [2026-09-18T13:13:59.915Z] Command:       /Users/marcomamone/.asdf/installs/nodejs/22.15.0/bin/node /Users/marcomamone/.asdf/installs/nodejs/22.15.0/bin/firebase functions:secrets:set GEMINI_API_KEY
+[debug] [2026-09-18T13:13:59.915Z] CLI Version:   15.3.0
+[debug] [2026-09-18T13:13:59.915Z] Platform:      darwin
+[debug] [2026-09-18T13:13:59.915Z] Node Version:  v22.15.0
+[debug] [2026-09-18T13:13:59.916Z] Time:          Fri Sep 18 2026 15:13:59 GMT+0200 (Central European Summer Time)
+[debug] [2026-09-18T13:13:59.916Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-09-18T13:14:00.011Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-18T13:14:00.012Z] > authorizing via signed-in user (marco.mamone9@gmail.com)
+[debug] [2026-09-18T13:14:00.012Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-18T13:14:00.012Z] > authorizing via signed-in user (marco.mamone9@gmail.com)
+[debug] [2026-09-18T13:14:00.012Z] [iam] checking project jobfinder-f0a77 for permissions ["firebase.projects.get","secretmanager.secrets.create","secretmanager.secrets.get","secretmanager.secrets.update","secretmanager.versions.add"]
+[debug] [2026-09-18T13:14:00.013Z] Checked if tokens are valid: true, expires at: 1789740830040
+[debug] [2026-09-18T13:14:00.013Z] Checked if tokens are valid: true, expires at: 1789740830040
+[debug] [2026-09-18T13:14:00.013Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77:testIamPermissions [none]
+[debug] [2026-09-18T13:14:00.013Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77:testIamPermissions x-goog-quota-user=projects/jobfinder-f0a77
+[debug] [2026-09-18T13:14:00.013Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77:testIamPermissions {"permissions":["firebase.projects.get","secretmanager.secrets.create","secretmanager.secrets.get","secretmanager.secrets.update","secretmanager.versions.add"]}
+[debug] [2026-09-18T13:14:00.810Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77:testIamPermissions 200
+[debug] [2026-09-18T13:14:00.810Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77:testIamPermissions {"permissions":["firebase.projects.get","secretmanager.secrets.create","secretmanager.secrets.get","secretmanager.secrets.update","secretmanager.versions.add"]}
+[debug] [2026-09-18T13:14:00.811Z] Checked if tokens are valid: true, expires at: 1789740830040
+[debug] [2026-09-18T13:14:00.811Z] Checked if tokens are valid: true, expires at: 1789740830040
+[debug] [2026-09-18T13:14:00.812Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77 [none]
+[debug] [2026-09-18T13:14:01.014Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77 200
+[debug] [2026-09-18T13:14:01.014Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/jobfinder-f0a77 {"projectNumber":"226213671442","projectId":"jobfinder-f0a77","lifecycleState":"ACTIVE","name":"JobFinder","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2026-09-16T10:58:03.128Z"}
+[debug] [2026-09-18T13:14:01.015Z] Checked if tokens are valid: true, expires at: 1789740830040
+[debug] [2026-09-18T13:14:01.015Z] Checked if tokens are valid: true, expires at: 1789740830040
+[debug] [2026-09-18T13:14:01.015Z] >>> [apiv2][query] GET https://secretmanager.googleapis.com/v1/projects/jobfinder-f0a77/secrets/GEMINI_API_KEY [none]
+[debug] [2026-09-18T13:14:01.369Z] <<< [apiv2][status] GET https://secretmanager.googleapis.com/v1/projects/jobfinder-f0a77/secrets/GEMINI_API_KEY 200
+[debug] [2026-09-18T13:14:01.369Z] <<< [apiv2][body] GET https://secretmanager.googleapis.com/v1/projects/jobfinder-f0a77/secrets/GEMINI_API_KEY {"name":"projects/226213671442/secrets/GEMINI_API_KEY","replication":{"automatic":{}},"createTime":"2026-09-18T13:13:53.430693Z","labels":{"firebase-managed":"functions"},"etag":"\"165bc1ac163c9e\""}
+[debug] [2026-09-18T13:17:49.339Z] ExitPromptError: User force closed the prompt with SIGINT
+    at Interface.sigint (/Users/marcomamone/.asdf/installs/nodejs/22.15.0/lib/node_modules/firebase-tools/node_modules/@inquirer/core/dist/commonjs/lib/create-prompt.js:101:37)
+    at Interface.emit (node:events:518:28)
+    at [_ttyWrite] [as _ttyWrite] (node:internal/readline/interface:1128:18)
+    at ReadStream.onkeypress (node:internal/readline/interface:267:20)
+    at ReadStream.emit (node:events:530:35)
+    at emitKeys (node:internal/readline/utils:370:14)
+    at emitKeys.next (<anonymous>)
+    at ReadStream.onData (node:internal/readline/emitKeypressEvents:64:36)
+    at ReadStream.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+[error] 
+[error] Error: An unexpected error has occurred.

@@ -116,9 +116,12 @@ function resolveModel(provider: Provider): string {
     : process.env.OPENAI_MODEL || 'gpt-4o';
 }
 
-function resolveApiKey(provider: Provider, provided: unknown): string | undefined {
-  if (typeof provided === 'string' && provided.trim()) return provided.trim();
-  return provider === 'gemini' ? process.env.GEMINI_API_KEY : process.env.OPENAI_API_KEY;
+function resolveApiKey(provided: unknown): string | undefined {
+  return typeof provided === 'string' && provided.trim() ? provided.trim() : undefined;
+}
+
+function missingKeyError(provider: Provider): string {
+  return `Set a${provider === 'gemini' ? ' Gemini' : 'n OpenAI'} API key in Settings first.`;
 }
 
 function splitDataUrl(dataUrl: string): { mimeType: string; base64: string } {
@@ -251,10 +254,10 @@ app.post('/api/profile', async (req, res) => {
     if (!base64 || typeof base64 !== 'string') {
       return res.status(400).json({ error: 'Missing CV file.' });
     }
-    const resolvedKey = resolveApiKey(provider, apiKey);
+    const resolvedKey = resolveApiKey(apiKey);
     if (!resolvedKey) {
       return res.status(500).json({
-        error: `Set a${provider === 'gemini' ? ' Gemini' : 'n OpenAI'} API key in Settings or in .env first.`,
+        error: missingKeyError(provider),
       });
     }
 
@@ -790,10 +793,10 @@ app.post('/api/tailor-cv', async (req, res) => {
     if (!job || typeof job !== 'object') {
       return res.status(400).json({ error: 'Missing job.' });
     }
-    const resolvedKey = resolveApiKey(provider, apiKey);
+    const resolvedKey = resolveApiKey(apiKey);
     if (!resolvedKey) {
       return res.status(500).json({
-        error: `Set a${provider === 'gemini' ? ' Gemini' : 'n OpenAI'} API key in Settings or in .env first.`,
+        error: missingKeyError(provider),
       });
     }
 
@@ -847,10 +850,10 @@ app.post('/api/jobs/next', async (req, res) => {
     if (!profile || typeof profile !== 'string' || profile.trim().length < 10) {
       return res.status(400).json({ error: 'Missing candidate profile. Upload your CV first.' });
     }
-    const resolvedKey = resolveApiKey(provider, apiKey);
+    const resolvedKey = resolveApiKey(apiKey);
     if (!resolvedKey) {
       return res.status(500).json({
-        error: `Set a${provider === 'gemini' ? ' Gemini' : 'n OpenAI'} API key in Settings or in .env first.`,
+        error: missingKeyError(provider),
       });
     }
 

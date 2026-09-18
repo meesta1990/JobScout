@@ -29,10 +29,9 @@ provider (ChatGPT/OpenAI or Gemini/Google) and enter your own API key for it on 
 - "Tailor CV for this role" generates a PDF of your CV re-emphasized for the offer you're viewing (same facts, reordered/reworded skills and bullets - never invents anything), in one of 5 layouts (Classic, Sidebar, Bold Header, Minimal, Timeline), each a single accent color.
 - The menu (hamburger icon, top left) lists every job you've applied to and opens Settings, where you can switch provider, update your API key and pick the tailored-CV layout.
 
-Locally, state is persisted per-browser in `data/clients/<clientId>.json`. `OPENAI_API_KEY` /
-`GEMINI_API_KEY` in `.env` (copy `.env.example`) are optional server-side fallbacks for calling
-the API directly (e.g. with `curl`) - the app itself always asks for a key in the browser
-regardless, since that's what actually gets sent with each request.
+Locally, state is persisted per-browser in `data/clients/<clientId>.json`. There is no
+server-side API key fallback - every request always carries the key from the browser's
+Settings. `.env` (copy `.env.example`) only lets you override which model each provider uses.
 
 ## Deploy to Firebase
 
@@ -40,13 +39,8 @@ The app is set up as **Firebase Hosting** (the React frontend) + **Cloud Functio
 
 One-time project setup (from the Firebase console, or CLI as noted):
 1. **Enable Firestore** for the project (Firestore Database → Create database, native mode, pick a region). Required - it's not enabled yet.
-2. **Upgrade the project to the Blaze (pay-as-you-go) plan.** Cloud Functions v2 (used here) require it, and it also causes real cost: every visitor's search calls the selected AI provider on your key (if they haven't set their own in Settings). There is no login/paywall in front of this app (by design, per your choice), so anyone with the URL can trigger searches.
-3. Set the provider key(s) as Cloud Functions secrets (never commit them) - at least one is needed as a fallback, both if you want both providers to work without visitors supplying their own key:
-   ```bash
-   firebase functions:secrets:set OPENAI_API_KEY
-   firebase functions:secrets:set GEMINI_API_KEY
-   ```
-4. (Optional) Override the models by creating `functions/.env` from `functions/.env.example`.
+2. **Upgrade the project to the Blaze (pay-as-you-go) plan.** Cloud Functions v2 (used here) require it. Each visitor supplies their own provider API key from Settings, so this doesn't cause API cost on your own key - it's just a Cloud Functions requirement.
+3. (Optional) Override the models by creating `functions/.env` from `functions/.env.example`.
 
 Then, whenever you want to deploy:
 ```bash
